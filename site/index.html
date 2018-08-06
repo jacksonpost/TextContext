@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE HTML>
 <html>
 <head>
 	<meta charset="utf-8">
@@ -9,13 +9,7 @@
 	* {border:0;padding:0;margin:0;}
 	body{
 		font-family: sans-serif;
-		/*font-family: garamond, georgia, serif;*/
-		/*background:#f3f3f3;
-		color:#222;*/
-		/*background:#398930;
-		color: #fff;*/
 		background: #333;
-		/*color: #ffcb00;*/
 		color: #fff;
 		font-size: 16px;
 	}
@@ -23,21 +17,15 @@
 
 	#wrapper{
 		width:100%;
-		/*background: #000;*/
-		/*margin-top:1.3em;*/
 	}
 
 	#topNav{ 
-		/*position: fixed; */
 		width:100%;
-		/*margin-left: 5%; 
-		top:20%;
-		margin-top: -3.5em;*/
 		z-index: 3;
 	}
+        
 	#searchBox{
 		width:100%;
-
 		background:#333;
 		color:#fff;
 		border-bottom: 0.3em solid #fff;
@@ -48,9 +36,8 @@
 		text-align: center;
 
 	}
-	#searchForm{}
+        
 	#submitButton, #clearButton, #loading, #sHistory{
-		/*font-size: 0.9em; */
 		padding: 0.2em;
 		font-variant: small-caps; 
 		font-family: sans-serif; 
@@ -63,11 +50,11 @@
 		position: relative;
 		top: -2em;
 	}
-	#submitButton:hover, #clearButton:hover{
-		cursor:pointer; 
-		color:#fff;
-		background: #000;
-	}
+        #submitButton:hover, #clearButton:hover{
+            cursor:pointer; 
+            color:#fff;
+            background: #000;
+        }
 
 	#sentences {
 		width:100%; 
@@ -76,24 +63,24 @@
 	}
 
 	.mCol{text-align: center; font-weight:bold; }
+        .mCol span{overflow: visible;}
+        .mCol a:hover{background-color:#f06; color: #fff;}
 	.lCol{text-align: right; }
 	.rCol{text-align: left; }
 
 	.lCol, .mCol, .rCol{
 		position:absolute; 
 	}
+        .mCol span, .lCol span, .rCol span{ 
+            position: relative;
+            width:100%; 
+            display:block; 
+            height:1.3em;  
+            overflow: hidden;
+            white-space: nowrap;
+            margin:0.2em;
+        }
 
-	.mCol span, .lCol span, .rCol span{ 
-		position: relative;
-		width:100%; 
-		display:block; 
-		height:1.3em;  
-		overflow: hidden;
-		white-space: nowrap;
-		margin:0.2em;
-	}
-	.mCol span{overflow: visible;}
-	.mCol a:hover{background-color:#f06; color: #fff;}
 	.minusLetter{left:-0.2em;}
 	.plusLetter{left:0.2em;}
 
@@ -120,10 +107,10 @@
 		letter-spacing: -0.3em;
 		text-align: justify;
 	}
-	.label a:hover{cursor:pointer;}
+	   .label a:hover{cursor:pointer;}
 
 	.snipLink{font-weight: bold;  display: inline-block; }
-	.snipLink:hover{cursor:pointer; /*color:#06f; background-color:#f06; color:#fff;*/}
+	   .snipLink:hover{cursor:pointer;}
 
 	.snipHover{color:#fff; background:#09f; text-decoration: none;}
 	.snipHoverGreen{color:#fff; background:#0d4; text-decoration: none;}
@@ -132,10 +119,6 @@
 
 	.frameLeft{width:10%; height:100%; position:fixed; left:0; background:#fff; z-index: 1;}
 	.frameRight{width:10%; height:100%; position:fixed; right:0; background:#fff; z-index: 1;}
-
-	#loading{
-		/*width:10%; position:absolute; text-align:center; font-size: 1.3em; margin-left:45%; margin-top:10em;*/
-	}
 
 	</style>
 </head>
@@ -294,9 +277,6 @@ Fix RUL so it updates to include search terms (works for first one)
 							//var patt = new RegExp(searchTerms[searchTerms.length-1],"ig"); // case-insensitive
 							//var patt = new RegExp("" + searchTerms[searchTerms.length-1] + ".*?("+ searchTerms[searchTerms.length-1] + ")","ig");
 
-							//console.log("filtering regex: "+patt);
-
-							//var n = snippets[sPoint+i].snippet.search(patt);
 							var n = snippets[sPoint+i].snippet.toLowerCase().lastIndexOf(searchTerms[searchTerms.length-1]);
 							//console.log("filter result: "+n);
 							var pt1 = "";
@@ -336,19 +316,6 @@ Fix RUL so it updates to include search terms (works for first one)
 									pt3 = pt3.replace(w,"<div class='snipLink' ident='"+(sPoint+i)+"'>" + w + "</div>");
 								});
 							}
-
-							// create stopword filtered array and create snippet links
-							/*if(!snippets[sPoint+i].hasOwnProperty("stopSnip")){
-								var re = /\W+/;
-								var snipArray = snippets[sPoint+i].snippet.split(re);
-								var mergedStop = stopArray.concat(searchTerms);
-								var filtArray = snipArray.filter(function(w){ return mergedStop.indexOf(w.toLowerCase()) == -1});
-								filtArray = filtArray.filter(function(w){ return w.length > 2}); // return true only for words not in the array stopwords
-								filtArray.forEach(function(w){
-									pt1 = pt1.replace(w,"<div class='snipLink'>" + w + "</div>");
-									pt3 = pt3.replace(w,"<div class='snipLink'>" + w + "</div>");
-								});
-							}*/
 
 							if(applyPlus){ // tighten spacing
 								var lft = $("<span class='plusLetter' ident='"+(sPoint+i)+"'>"+pt1+"</span>").hide();
@@ -395,10 +362,6 @@ Fix RUL so it updates to include search terms (works for first one)
 				$('.rCol span').each(function(index){ $(this).delay(index*150).fadeIn(); });
 			}
 
-/////////
-		//clearTimeout(backText);
-		//backText = setInterval(buildRandLabel, 8000);
-/////////
 
 			// there's probably a better way to do this
 			$( "div .snipLink").off();
@@ -424,12 +387,9 @@ Fix RUL so it updates to include search terms (works for first one)
 					}).addClass("snipHoverGreen");
 					// add a keydown for shift here
 				}
-				//buildLabel($(this));
 			}).on('mouseleave',function(){
 				$(".snipHover").removeClass("snipHover");
 				$(".snipHoverGreen").removeClass("snipHoverGreen");
-				//$('.label').fadeOut();
-				//$('.label').remove();
 			});
 
 			$(document).on('keydown', function(e){
@@ -438,17 +398,14 @@ Fix RUL so it updates to include search terms (works for first one)
 					$(".snipHoverGreen").removeClass("snipHover");
 				}
 			}).on('keyup', function(e){
-				//if(e.ctrlKey || e.metaKey){
-					$(".snipHoverGreen").addClass("snipHover");
-					$(".snipHoverGreen").removeClass("snipHoverGreen");
-				//}
+                $(".snipHoverGreen").addClass("snipHover");
+                $(".snipHoverGreen").removeClass("snipHoverGreen");
 			});
 
 
 			if (pageN < pageLimit){
 				loadData(pageN+1,pagelen,query);
 			} else {
-
 				console.log("finished loading");
 			}
 		})
@@ -463,14 +420,9 @@ Fix RUL so it updates to include search terms (works for first one)
 		// Display the next exploration step on mouseover of word/sentence
 		var ident = here.attr('ident');
 		$('body').append("<div class='label'>"+snippets[ident].fullText+"</div>");
-		//$('.label').hide();
-		//$('.label').fadeIn();
-		//$(here).replaceWith("<div class='label'><a class='labelButton'>+</a>"+here.html()+"<a class='labelButton'>*</a></div>");
-		// $('.label a').on('click',function(){});
 	}
 
 	function buildRandLabel(){
-		//$('.label').css("height","100%");
 		$('.label').fadeOut(2000,function(){
 			$(this).remove();
 		});
@@ -488,39 +440,15 @@ Fix RUL so it updates to include search terms (works for first one)
 	    return $.fn.textWidth.fakeEl.width();
 	};
 
-/* OBSOLETE FUNCTIONS */
-
-	function getStopwords()
-	{
-	    var rawFile = new XMLHttpRequest();
-	    rawFile.open("GET", "data/stopWords/stop-words_english_2_en.txt", true);
-	    rawFile.onreadystatechange = function ()
-	    {
-	        if(rawFile.readyState === 4)
-	        {
-	        	var rawText = rawFile.responseText;
-	            stopArray = rawText.split('\n');
-	            if(stopArray[stopArray.length-1]==""){stopArray.pop()}
-	        }
-	    }
-	    rawFile.send();
-	}
-
 </script>
 
 <h1></h1>
 <div id="wrapper">
-<!--
-	<span class="frameLeft"></span>
-	<span class="frameRight"></span>
--->
 	<div id="topNav">
 		<form id="searchForm">
 			<input type="text" autofocus id="searchBox" name="search">
 		</form>
 		<span id="submitButton">submit</span>
-		<!-- <span>&nbsp;&nbsp;</span> -->
-		<!-- <span id="clearButton">clear</span> -->
 	</div>	
 	<div id="sentences">
 		<div class="lCol"></div>
