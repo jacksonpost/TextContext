@@ -1,0 +1,533 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>textContext v0.2</title>
+	<script type="text/javascript" src="scripts/jquery110.min.js"></script>
+	<style>
+
+	* {border:0;padding:0;margin:0;}
+	body{
+		font-family: sans-serif;
+		/*font-family: garamond, georgia, serif;*/
+		/*background:#f3f3f3;
+		color:#222;*/
+		/*background:#398930;
+		color: #fff;*/
+		background: #333;
+		/*color: #ffcb00;*/
+		color: #fff;
+		font-size: 16px;
+	}
+	a {color:inherit; text-decoration: none;}
+
+	#wrapper{
+		width:100%;
+		/*background: #000;*/
+		/*margin-top:1.3em;*/
+	}
+
+	#topNav{ 
+		/*position: fixed; */
+		width:100%;
+		/*margin-left: 5%; 
+		top:20%;
+		margin-top: -3.5em;*/
+		z-index: 3;
+	}
+	#searchBox{
+		width:100%;
+
+		background:#333;
+		color:#fff;
+		border-bottom: 0.3em solid #fff;
+		height:2em;
+		display: inline-block;
+		font-variant: small-caps;
+		font-size: 2em;
+		text-align: center;
+
+	}
+	#searchForm{}
+	#submitButton, #clearButton, #loading, #sHistory{
+		/*font-size: 0.9em; */
+		padding: 0.2em;
+		font-variant: small-caps; 
+		font-family: sans-serif; 
+		background: #fff; 
+		color:#000;
+		display: inline-block;
+		float: right;
+		margin-left: 0.9em;
+		z-index: 4;
+		position: relative;
+		top: -2em;
+	}
+	#submitButton:hover, #clearButton:hover{
+		cursor:pointer; 
+		color:#fff;
+		background: #000;
+	}
+
+	#sentences {
+		width:100%; 
+		position:relative; 
+		font-size: 1.3em;
+	}
+
+	.mCol{text-align: center; font-weight:bold; }
+	.lCol{text-align: right; }
+	.rCol{text-align: left; }
+
+	.lCol, .mCol, .rCol{
+		position:absolute; 
+	}
+
+	.mCol span, .lCol span, .rCol span{ 
+		position: relative;
+		width:100%; 
+		display:block; 
+		height:1.3em;  
+		overflow: hidden;
+		white-space: nowrap;
+		margin:0.2em;
+	}
+	.mCol span{overflow: visible;}
+	.mCol a:hover{background-color:#f06; color: #fff;}
+	.minusLetter{left:-0.2em;}
+	.plusLetter{left:0.2em;}
+
+	#sideNav{
+		width:100px;
+		margin: 0.5em;
+		background: #fefefe;
+		position: absolute;
+		right: 0;
+		top: 0;
+	}
+
+	.label{
+		position:absolute;
+		top:0;
+		left:0;
+		width:100%;
+		height:100%;
+		overflow: hidden;
+		z-index: -20;
+		color: #ececec;
+		font-size: 8em;
+		line-height: 0.5em;
+		letter-spacing: -0.3em;
+		text-align: justify;
+	}
+	.label a:hover{cursor:pointer;}
+
+	.snipLink{font-weight: bold;  display: inline-block; }
+	.snipLink:hover{cursor:pointer; /*color:#06f; background-color:#f06; color:#fff;*/}
+
+	.snipHover{color:#fff; background:#09f; text-decoration: none;}
+	.snipHoverGreen{color:#fff; background:#0d4; text-decoration: none;}
+
+	#ordering{position: fixed; right:0; text-align: right; margin-right:2em;}
+
+	.frameLeft{width:10%; height:100%; position:fixed; left:0; background:#fff; z-index: 1;}
+	.frameRight{width:10%; height:100%; position:fixed; right:0; background:#fff; z-index: 1;}
+
+	#loading{
+		/*width:10%; position:absolute; text-align:center; font-size: 1.3em; margin-left:45%; margin-top:10em;*/
+	}
+
+	</style>
+</head>
+<body>	
+
+<script type="text/javascript">
+
+/*---------------
+
+To fix:
+Getting fragments of HTML in snippets
+Need to be able to cancel load if clear or submit is clocked while loading
+--Need to refine position of search box
+Need to fail gracefully if no search matches - maybe automatically choose an alternative?  Or present as an option?
+--Disable search if current term is unchanged
+--Results are clustering on right side, find out why--fixed using lastindexof()
+Fix RUL so it updates to include search terms (works for first one)
+--Build a search history so people can see the sequence of their searches
+---------------*/
+
+	var snippets=[];
+	var stopArray= ["a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours ", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"];
+	var searchTerms = [];
+	var searchJoined = "";
+	var pageLimit=1;
+	var pageSize=50;
+	var backText;
+	var re = /\W+/;
+	var searchHistory = [];
+
+	$(document).ready(function(){ 
+
+		$('#submitButton').on('click',function(){
+			var oldSearch = searchTerms;
+			searchTerms=[];
+			searchTerms = $('#searchBox').val().toLowerCase().split(re);
+			console.log("old:"+oldSearch+" new:"+searchTerms);
+			if(searchTerms.toString()!==oldSearch.toString()){ // prevents repeating current search - saves resources
+		 		searchIt();
+		 	}
+		 });
+	 	$('#searchForm').on('submit',function(evt){ // submit with return key
+	 		evt.preventDefault();
+		    //window.history.back();
+		    var oldSearch = searchTerms;
+	 		searchTerms=[];
+	 		searchTerms = $('#searchBox').val().toLowerCase().split(re);
+	 		console.log("old:"+oldSearch+" new:"+searchTerms);
+	 		if(searchTerms.toString()!==oldSearch.toString()){ // prevents repeating current search - saves resources
+		 		searchIt();
+		 	}
+	 	});
+	 	/* disabled this clear button, left this in case I want it back fast
+	 	$('#clearButton').on('click',function(){
+			$('#searchBox').val("");
+			$("#searchForm input").focus();
+		});
+	 	*/
+	});
+
+	function searchIt(){
+		$('#loading').remove();
+		// need to kill search-in-progress here
+		var loader = $("<span id='loading'>loading...</span>").hide();
+		$('#topNav').append(loader);
+		$('#loading').fadeIn();
+
+		searchJoined = searchTerms.join(" ").toLowerCase();
+		$('#searchBox').val(searchJoined);
+		console.log("New search: "+searchJoined);
+		
+		formatCols();
+		getItems();
+
+		searchHistory.push(searchJoined);
+		console.log("history: "+searchHistory);
+		$('#sHistory').remove();
+		var sHistory = $("<span id='sHistory'>"+searchHistory.toString().replace(","," ")+"</span>").hide();
+		$('#topNav').append(sHistory);
+		$('#sHistory').fadeIn();
+	}
+
+	function getItems(){
+		console.log("Getting items...");
+		snippets=[];
+		loadData(0,pageSize,searchJoined);
+	}
+
+	function compoundSearch(srch){
+		searchTerms.push(srch);
+		searchIt();
+	}
+
+	function formatCols(){
+		// seems like overkill but empty wasn't doing the job
+		$('.mCol').remove();
+		$('.lCol').remove();
+		$('.rCol').remove();
+		$('#sentences').append("<div class='lCol'></div><div class='mCol'></div><div class='rCol'></div>");
+		$('.mCol').append("<span>"+searchTerms[searchTerms.length-1]+"</span>");
+		var midCol = $('.mCol span').width();
+		var docW = $(document).width()-20; //accounting for scrollbar
+		var rem = docW - midCol;
+		var sideCols = Math.floor(rem/2);
+		$('.lCol').width(sideCols*5);
+		$('.mCol').width(midCol);
+		$('.rCol').width(sideCols);
+		$('.lCol').css({left:-sideCols*4});
+		$('.mCol').css({left:sideCols});
+		$('.rCol').css({left:sideCols+midCol});
+		$('.mCol').empty();
+	}
+
+	function loadData(pageN,pagelen,query){
+
+		var sPoint=pageN*pagelen;
+
+		console.log("searching for: "+query);
+
+		var queryPhrase = "%22"+query+"%22";
+		// &reclevel=full
+		// &sortby=dateasc
+		$.getJSON('http://api.trove.nla.gov.au/result?key=1ks0i5lp0mq6qj5s&zone=newspaper&q='+queryPhrase+'&encoding=json&include=articletext&n='+pagelen+'&s='+sPoint+'&callback=?', function(data) {
+			//broken
+			if(data.response){
+
+				var item = data.response.zone[0].records.article;
+				
+				if(item!=null){
+					
+					for (var i = 0; i< item.length; i++) {
+						
+						if(item[i].hasOwnProperty("snippet")){
+
+							var applyMinus = false;
+							var applyPlus = false;
+							var str = $('<div/>').html(item[i].snippet).text(); // remove html formatting from the snippet
+							//str = str.replace(/[^0-9a-zA-Z]+/g," "); // clear symbols - too heavy
+							var art = $('<div/>').html(item[i].articleText).text();
+							var itemOb = {
+								"number": sPoint+i,
+								"heading": item[i].heading,
+								"snippet": str,
+								"fullText": art,
+								"date": item[i].date,
+								"url": item[i].troveUrl,
+								"pdf": item[i].pdf
+							}
+
+							snippets.push(itemOb);
+
+							// break snippet into three parts around first occurence of query term
+							var patt = new RegExp(searchTerms[searchTerms.length-1],"i"); // case-insensitive
+							// break snippet into three parts around ? occurence of query term
+							//var patt = /inserthere/ig;
+							//var patt = new RegExp(searchTerms[searchTerms.length-1],"ig"); // case-insensitive
+							//var patt = new RegExp("" + searchTerms[searchTerms.length-1] + ".*?("+ searchTerms[searchTerms.length-1] + ")","ig");
+
+							//console.log("filtering regex: "+patt);
+
+							//var n = snippets[sPoint+i].snippet.search(patt);
+							var n = snippets[sPoint+i].snippet.toLowerCase().lastIndexOf(searchTerms[searchTerms.length-1]);
+							//console.log("filter result: "+n);
+							var pt1 = "";
+							var pt2 = searchTerms[searchTerms.length-1];
+							var pt3;
+							var endQ = n+pt2.length;
+
+							for(var j=0; j<snippets[sPoint+i].snippet.length;j++){
+								if(j<n){
+									pt1+=snippets[sPoint+i].snippet[j];
+								}else if(j==n){
+									if(snippets[sPoint+i].snippet[n-1]!=" "){ // force more consistent word spacing
+										applyPlus = true;
+									}else{applyPlus = false;}
+								}else if(j>=endQ){
+									if(j==endQ){
+										if(snippets[sPoint+i].snippet[endQ]!=" "){ // force more consistent word spacing
+											applyMinus = true;
+										}else{applyMinus = false;}
+									}
+									pt3=snippets[sPoint+i].snippet.slice(j);
+									break;
+								}
+							}
+
+							// create stopword filtered array from full article text and make snippet links
+							if(!snippets[sPoint+i].hasOwnProperty("stopSnip")){
+								var re = /\W+/;
+								var snipArray = snippets[sPoint+i].fullText.split(re);
+								//var mergedStop = stopArray.concat(searchTerms); // add search term to stop array - too coarse
+								var filtArray = snipArray.filter(function(w){ return stopArray.indexOf(w.toLowerCase()) == -1});
+								filtArray = filtArray.filter(function(w){ return w.length > 2}); // return true only for words not in the array stopwords
+
+								// this is a bit broken - inserts this as string rather than link for some
+								filtArray.forEach(function(w){
+									pt1 = pt1.replace(w,"<div class='snipLink' ident='"+(sPoint+i)+"'>" + w + "</div>");
+									pt3 = pt3.replace(w,"<div class='snipLink' ident='"+(sPoint+i)+"'>" + w + "</div>");
+								});
+							}
+
+							// create stopword filtered array and create snippet links
+							/*if(!snippets[sPoint+i].hasOwnProperty("stopSnip")){
+								var re = /\W+/;
+								var snipArray = snippets[sPoint+i].snippet.split(re);
+								var mergedStop = stopArray.concat(searchTerms);
+								var filtArray = snipArray.filter(function(w){ return mergedStop.indexOf(w.toLowerCase()) == -1});
+								filtArray = filtArray.filter(function(w){ return w.length > 2}); // return true only for words not in the array stopwords
+								filtArray.forEach(function(w){
+									pt1 = pt1.replace(w,"<div class='snipLink'>" + w + "</div>");
+									pt3 = pt3.replace(w,"<div class='snipLink'>" + w + "</div>");
+								});
+							}*/
+
+							if(applyPlus){ // tighten spacing
+								var lft = $("<span class='plusLetter' ident='"+(sPoint+i)+"'>"+pt1+"</span>").hide();
+								$('.lCol').append(lft);
+							}else{ 
+								var lft = $("<span ident='"+(sPoint+i)+"'>"+pt1+"</span>").hide();
+								$('.lCol').append(lft);
+							}
+							if(applyMinus){ // tighten spacing
+								var rgt = $("<span class='minusLetter' ident='"+(sPoint+i)+"'>"+pt3+"</span>").hide()
+								$('.rCol').append(rgt);
+							}else{ 
+								var rgt = $("<span ident='"+(sPoint+i)+"'>"+pt3+"</span>").hide()
+								$('.rCol').append(rgt);
+							}	
+							if(n!=-1){ // if query is found in the snippet
+								var mid = $("<span ident='"+(sPoint+i)+"'><a href='"+item[i].troveUrl+"' target='_blank'>"+pt2+"</a></span>").hide();
+								$('.mCol').append(mid);
+							}else{
+								var mid = $("<span ident='"+(sPoint+i)+"'><a href='"+item[i].troveUrl+"' target='_blank'>||</a></span>").hide();
+								$('.mCol').append(mid);
+							}
+						}
+					}
+				}else{
+					console.log("NO RECORD");
+					console.log("JSON failed to load: Q: "+query+" P: "+pageN);
+					$('#loading').remove();
+					$('#topNav').append("<span id='loading'>search failed, please try again</span>");
+				}
+			}
+		})
+		.done(function(){
+			console.log("Got JSON: Q: "+query+" P: "+pageN);
+			//console.log(snippets);
+			if(pageN>0){
+				$('.lCol span').filter(":hidden").each(function(index){ $(this).delay(index*150).fadeIn(); });
+				$('.mCol span').filter(":hidden").each(function(index){ $(this).delay(index*150).fadeIn(); });
+				$('.rCol span').filter(":hidden").each(function(index){ $(this).delay(index*150).fadeIn(); });
+			}else{
+				$('#loading').fadeOut();
+				$('.lCol span').each(function(index){ $(this).delay(index*150).fadeIn(); });
+				$('.mCol span').each(function(index){ $(this).delay(index*150).fadeIn(); });
+				$('.rCol span').each(function(index){ $(this).delay(index*150).fadeIn(); });
+			}
+
+/////////
+		//clearTimeout(backText);
+		//backText = setInterval(buildRandLabel, 8000);
+/////////
+
+			// there's probably a better way to do this
+			$( "div .snipLink").off();
+
+			$("div .snipLink").on('click',function(e){
+				if(e.ctrlKey || e.metaKey){
+					compoundSearch($(this).text().toLowerCase());
+				}else{
+					$("#wrapper").addClass("denySelection");
+					searchTerms = [""+$(this).text().toLowerCase()];
+					searchIt();
+				}
+			}).on('mouseenter',function(e){
+				var content = $(this).text().toLowerCase();
+
+				if(e.ctrlKey || e.metaKey){
+					$(".snipLink").filter(function(index){
+						return $(this).text().toLowerCase()==content;
+					}).addClass("snipHover");
+				}else{
+					$(".snipLink").filter(function(index){
+						return $(this).text().toLowerCase()==content;
+					}).addClass("snipHoverGreen");
+					// add a keydown for shift here
+				}
+				//buildLabel($(this));
+			}).on('mouseleave',function(){
+				$(".snipHover").removeClass("snipHover");
+				$(".snipHoverGreen").removeClass("snipHoverGreen");
+				//$('.label').fadeOut();
+				//$('.label').remove();
+			});
+
+			$(document).on('keydown', function(e){
+				if(e.ctrlKey || e.metaKey){
+					$(".snipHover").addClass("snipHoverGreen");
+					$(".snipHoverGreen").removeClass("snipHover");
+				}
+			}).on('keyup', function(e){
+				//if(e.ctrlKey || e.metaKey){
+					$(".snipHoverGreen").addClass("snipHover");
+					$(".snipHoverGreen").removeClass("snipHoverGreen");
+				//}
+			});
+
+
+			if (pageN < pageLimit){
+				loadData(pageN+1,pagelen,query);
+			} else {
+
+				console.log("finished loading");
+			}
+		})
+		.fail(function() {
+			console.log("JSON failed to load: Q: "+query+" P: "+pageN);
+			$('#loading').remove();
+			$('#topNav').append("<span id='loading'>search failed, please try again</span>");
+		});
+	}
+
+	function buildLabel(here){
+		// Display the next exploration step on mouseover of word/sentence
+		var ident = here.attr('ident');
+		$('body').append("<div class='label'>"+snippets[ident].fullText+"</div>");
+		//$('.label').hide();
+		//$('.label').fadeIn();
+		//$(here).replaceWith("<div class='label'><a class='labelButton'>+</a>"+here.html()+"<a class='labelButton'>*</a></div>");
+		// $('.label a').on('click',function(){});
+	}
+
+	function buildRandLabel(){
+		//$('.label').css("height","100%");
+		$('.label').fadeOut(2000,function(){
+			$(this).remove();
+		});
+		var ident = Math.round(Math.random()*snippets.length);
+		var $txt = $("<div class='label'>"+snippets[ident].fullText+"</div>");
+		$txt.hide();
+		$('#wrapper').append($txt);
+		$txt.fadeIn(2000);
+	}
+
+	// get width of text
+	$.fn.textWidth = function(text, font) {
+	    if (!$.fn.textWidth.fakeEl) $.fn.textWidth.fakeEl = $('<span>').hide().appendTo(document.body);
+	    $.fn.textWidth.fakeEl.text(text || this.val() || this.text()).css('font', font || this.css('font'));
+	    return $.fn.textWidth.fakeEl.width();
+	};
+
+/* OBSOLETE FUNCTIONS */
+
+	function getStopwords()
+	{
+	    var rawFile = new XMLHttpRequest();
+	    rawFile.open("GET", "data/stopWords/stop-words_english_2_en.txt", true);
+	    rawFile.onreadystatechange = function ()
+	    {
+	        if(rawFile.readyState === 4)
+	        {
+	        	var rawText = rawFile.responseText;
+	            stopArray = rawText.split('\n');
+	            if(stopArray[stopArray.length-1]==""){stopArray.pop()}
+	        }
+	    }
+	    rawFile.send();
+	}
+
+</script>
+
+<h1></h1>
+<div id="wrapper">
+<!--
+	<span class="frameLeft"></span>
+	<span class="frameRight"></span>
+-->
+	<div id="topNav">
+		<form id="searchForm">
+			<input type="text" autofocus id="searchBox" name="search">
+		</form>
+		<span id="submitButton">submit</span>
+		<!-- <span>&nbsp;&nbsp;</span> -->
+		<!-- <span id="clearButton">clear</span> -->
+	</div>	
+	<div id="sentences">
+		<div class="lCol"></div>
+		<div class="mCol"></div>
+		<div class="rCol"></div>
+	</div>
+	<div id="sideNav"></div>
+</div>
+
+</body>
